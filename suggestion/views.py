@@ -112,6 +112,6 @@ def suggestion_accept(request):
 @api_view(['POST'])
 def suggestion_reject(request):
     SatisfactionProcess().suggestion(request.data, "Reject")
-    url = f'http://서버:8000/api/routine/reject/{request.data["suggestion_id"]}'
+    url = f'http://127.0.0.3:8003/api/routine/reject/{request.data["suggestion_id"]}'
     requests.get(url)
     return Response({'result':f'<{request.data["contents"]}> 거절'}, status=201)

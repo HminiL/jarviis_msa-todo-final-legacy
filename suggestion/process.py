@@ -38,23 +38,27 @@ class SuggestionProcess:
         return top3
 
     def user_based_suggestion(self, user_id):
-        if EventProcess.user_event_count() < 10:
+        if EventProcess.user_event_count(user_id) < 10:
             user = User.objects.get(pk=user_id)
             interest = user.user_interest
-            max_id = SuggestionEvent.objects.filter(classification__contains=interest).count()
-            rand_id = random.randint(0, max_id)
-            return SuggestionEvent.objects.get(id=rand_id)
+            interest_events = SuggestionEvent.objects.filter(classification__contains=interest)
+            interest = []
+            [interest.append(event) for event in interest_events.id]
+            interest_id = random.sample(interest, 2)
+            events = []
+            [events.append(SuggestionEvent.objects.all()[i]) for i in interest_id]
+            return events
 
         else:
-            similarity_event = self.cosine_similarity(user_id)
-            suggestion_event = SuggestionEvent.objects.filter(title__contains=similarity_event).last()
+            similarity_title = self.cosine_similarity(user_id)
+            suggestion_event = SuggestionEvent.objects.filter(title__contains=similarity_title).last()
             return suggestion_event
 
     def cosine_similarity(self, user_id):
         latest_event = EventProcess().latest_event(user_id).title
         tfidf = TfidfVectorizer(stop_words='english')
         data = pd.read_csv(f'{self.path}suggestion.csv')
-        tfidf_matrix = tfidf.fit_transform(data['title'])
+        tfidf_matrix = tfidf.fit_transform(data['title'].toarray())
         cosine_matrix = cosine_similarity(tfidf_matrix, tfidf_matrix)
         title2idx = {}
         for i, c in enumerate(data['title']):
@@ -64,12 +68,12 @@ class SuggestionProcess:
         for i, c in title2idx.items():
             idx2title[c] = i
         idx = idx2title[latest_event]
-        ic(idx)
-        sim_scores = [[i, c] for i, c in enumerate(cosine_matrix[idx]) if i != idx]  # 자기 자신을 제외한 영화들의 유사도 및 인덱스를 추출
-        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)  # 유사도가 높은 순서대로 정렬
-        sim_scores = [(title2idx[i], score) for i, score in sim_scores[0:10] if score < 1 and score > 0]
-        similarity_event = sim_scores[0][0]
-        return similarity_event
+        sim_scores = [[i, c] for i, c in enumerate(cosine_matrix[idx]) if i != idx]
+        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+        sim_scores = [(title2idx[i], score) for i, score in sim_scores[0:2] if score < 0.9 and score > 0]
+        similarity_title = []
+        [similarity_title.append(sim_scores[i][0]) for i in range(len(sim_scores))]
+        return similarity_title
 
     def process(self, user_id):
         user_based_suggestion = self.user_based_suggestion(user_id)

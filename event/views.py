@@ -10,7 +10,6 @@ from event.serializer import EventSerializer
 
 
 @api_view(['GET', 'POST'])
-# @parser_classes([JSONParser])
 def event_all(request):
 
     if request.method == 'GET':
@@ -20,7 +19,6 @@ def event_all(request):
 
     elif request.method == 'POST':
         request_data = request.data
-        request_data['type'] = 'user'
         serializer = EventSerializer(data=request_data)
         if serializer.is_valid():
             serializer.save()
@@ -56,15 +54,16 @@ def event_by_id(request, id):
         if serializer.is_valid():
             serializer.save()
             return Response({'result': f'<ID_{serializer.data.get("id")}: {serializer.data.get("title")}> 수정완료'}, status=201)
-        
-    elif request.method =='POST':
-        serializer = EventSerializer(event)
-        serializer.update(event, request.data)
-        return Response({'completion 변경': serializer.data.get("completion")}, status=201)
-    
+
     elif request.method == 'DELETE':
         event.delete()
         return Response({'result': '삭제 성공'}, status=status.HTTP_204_NO_CONTENT)
+
+    elif request.method == 'POST':
+        serializer = EventSerializer(event)
+        serializer.update(event, request.data)
+        return Response({'completion 변경': serializer.data.get("completion")}, status=201)
+
     return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])

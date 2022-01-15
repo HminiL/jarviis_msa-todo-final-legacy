@@ -1,0 +1,33 @@
+version: '3'
+services:
+
+    nginx:
+        build: nginx
+        image: jarviis/nginx
+        container_name: nginx_suggestion
+#        restart: always
+        ports:
+          - "80:80"
+#        volumes:
+#          - .
+#          - ./log:/var/log/nginx
+        volumes:
+          - .:/app
+        depends_on:
+          - django
+
+    django:
+        build: .
+        image: jarviis/django
+        container_name: django_suggestion
+#        restart: always
+#        command: uwsgi --ini uwsgi.ini
+#        volumes:
+#          - .
+#          - ./log:/var/log/uwsgi
+        volumes:
+          - .:/app
+        ports:
+          - "8000:8000"
+        command: bash -c "python manage.py runserver 0.0.0.0:8000 && gunicorn api.wsgi:application --bind 0.0.0.0:8000"
+        #command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
